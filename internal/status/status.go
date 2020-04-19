@@ -43,6 +43,8 @@ type Status struct {
 	s *spb.Status
 }
 
+var _ = error(&Status{})
+
 // New returns a Status representing c and msg.
 func New(c codes.Code, msg string) *Status {
 	return &Status{s: &spb.Status{Code: int32(c), Message: msg}}
@@ -97,7 +99,7 @@ func (s *Status) Err() error {
 	if s.Code() == codes.OK {
 		return nil
 	}
-	return (*Error)(s.Proto())
+	return &Error{e: *(s.Proto())}
 }
 
 func (s *Status) Error() string {
@@ -143,16 +145,20 @@ func (s *Status) Details() []interface{} {
 
 // Error is an alias of a status proto. It implements error and Status,
 // and a nil Error should never be returned by this package.
-type Error spb.Status
+type Error struct {
+	e spb.Status
+}
+
+var _ = error(&Error{})
 
 func (se *Error) Error() string {
-	p := (*spb.Status)(se)
+	p := se.e
 	return fmt.Sprintf("rpc error: code = %s desc = %s", codes.Code(p.GetCode()), p.GetMessage())
 }
 
 // GRPCStatus returns the Status represented by se.
 func (se *Error) GRPCStatus() *Status {
-	return FromProto((*spb.Status)(se))
+	return &Status{s: &se.e}
 }
 
 // Is implements future error.Is functionality.
@@ -162,5 +168,5 @@ func (se *Error) Is(target error) bool {
 	if !ok {
 		return false
 	}
-	return proto.Equal((*spb.Status)(se), (*spb.Status)(tse))
+	return proto.Equal(&se.e, &tse.e)
 }
