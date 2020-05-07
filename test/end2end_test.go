@@ -571,7 +571,7 @@ func (te *test) listenAndServe(ts testpb.TestServiceServer, listen func(network,
 	te.t.Logf("Running test in %s environment...", te.e.name)
 	sopts := []grpc.ServerOption{grpc.MaxConcurrentStreams(te.maxStream)}
 	if te.maxServerMsgSize != nil {
-		sopts = append(sopts, grpc.MaxMsgSize(*te.maxServerMsgSize))
+		sopts = append(sopts, grpc.MaxRecvMsgSize(*te.maxServerMsgSize))
 	}
 	if te.maxServerReceiveMsgSize != nil {
 		sopts = append(sopts, grpc.MaxRecvMsgSize(*te.maxServerReceiveMsgSize))
@@ -780,7 +780,7 @@ func (te *test) configDial(opts ...grpc.DialOption) ([]grpc.DialOption, string) 
 		opts = append(opts, grpc.WithStreamInterceptor(te.streamClientInt))
 	}
 	if te.maxClientMsgSize != nil {
-		opts = append(opts, grpc.WithMaxMsgSize(*te.maxClientMsgSize))
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(*te.maxClientMsgSize)))
 	}
 	if te.maxClientReceiveMsgSize != nil {
 		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(*te.maxClientReceiveMsgSize)))
